@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Dashboard from "../pages/Dashboard";
+import Orders from "@/pages/Orders";
 
 function ComingSoon({ title }) {
   return (
@@ -18,7 +19,7 @@ export default function AppRoutes() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="pos" element={<ComingSoon title="POS Billing" />} />
-          <Route path="orders" element={<ComingSoon title="Orders" />} />
+          <Route path="orders" element={<Orders/>} />
           <Route path="menu" element={<ComingSoon title="Menu Management" />} />
           <Route path="inventory" element={<ComingSoon title="Inventory" />} />
           <Route path="expenses" element={<ComingSoon title="Expenses" />} />
