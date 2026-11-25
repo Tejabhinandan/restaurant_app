@@ -27,7 +27,7 @@ import KpiCard from "../components/ui/KpiCard";
 import MetricStrip from "../components/ui/MetricStrip";
 import StatusBadge from "../components/ui/StatusBadge";
 import DataTable from "../components/ui/DataTable";
-import { ordersData } from "../data/mockOrders";
+import useOrders from "@/hooks/useOrders";
 
 const hourlyRevenue = [
   { time: "10 AM", sales: 2100 },
@@ -60,6 +60,7 @@ const bestSellingItems = [
 ];
 
 export default function Dashboard() {
+  const { orders } = useOrders();
   const [timeframe, setTimeframe] = useState("Today");
   const navigate = useNavigate();
 
@@ -366,7 +367,7 @@ export default function Dashboard() {
                   Recent orders
                 </h3>
                 <span className="rounded-md bg-[#261f1b] px-2 py-0.5 text-xs font-semibold text-stone-300">
-                  {ordersData.length}
+                  {orders?.length}
                 </span>
               </div>
               <p className="mt-0.5 text-xs text-stone-400">
@@ -385,7 +386,7 @@ export default function Dashboard() {
 
           <DataTable
             columns={recentOrderColumns}
-            data={ordersData.slice(0, 5)}
+            data={orders?.slice(0, 5)}
             onRowClick={() => navigate("/orders")}
           />
         </div>

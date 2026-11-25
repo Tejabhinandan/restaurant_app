@@ -128,6 +128,39 @@ body {
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+ /* for bill printing */
+@media print {
+  /* 1. Set exact thermal roll size (80mm standard, change to 58mm for compact printers) */
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  /* 2. Hide everything on the screen (Sidebar, Header, POS UI) */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 3. Show ONLY the receipt container */
+  #thermal-receipt,
+  #thermal-receipt * {
+    visibility: visible;
+  }
+
+  /* 4. Position receipt at top-left of the thermal roll with high-contrast ink */
+  #thermal-receipt {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    padding: 4mm;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+}
 
 @layer base {
   * {
