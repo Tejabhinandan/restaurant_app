@@ -8,6 +8,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { useMenu } from "@/hooks/useMenu";
+import { useOrders } from "@/hooks/useOrders";
 import FoodTypeBadge from "@/components/ui/FoodTypeBadge.";
 import { menuCategories } from "@/data/mockMenu";
 import { useNavigate } from "react-router-dom";
@@ -25,20 +26,39 @@ const tables = [
 
 export default function PosBilling() {
   const { menuItems } = useMenu();
+  const { activeCart, setActiveCart, clearActiveCart } = useOrders();
   const navigate = useNavigate();
 
-  // Catalog Filters
+  // Catalog Filters (local UI filters)
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [vegOnly, setVegOnly] = useState(false);
 
-  // Order & Cart State
-  const [orderType, setOrderType] = useState("Dine-in");
-  const [selectedTable, setSelectedTable] = useState("Table 01");
-  const [customerName, setCustomerName] = useState("");
-  const [cart, setCart] = useState([]);
-  const [discountType, setDiscountType] = useState("FLAT"); // FLAT | PERCENT
-  const [discountValue, setDiscountValue] = useState("");
+  // Order & Cart State persisted in OrderProvider
+  const {
+    items: cart,
+    orderType,
+    selectedTable,
+    customerName,
+    discountType,
+    discountValue,
+  } = activeCart;
+
+  const setCart = (updater) => {
+    setActiveCart((prev) => ({
+      ...prev,
+      items: typeof updater === "function" ? updater(prev.items) : updater,
+    }));
+  };
+
+  const setOrderType = (val) =>
+    setActiveCart((prev) => ({ ...prev, orderType: val }));
+
+  const setSelectedTable = (val) =>
+    setActiveCart((prev) => ({ ...prev, selectedTable: val }));
+
+  const setCustomerName = (val) =>
+    setActiveCart((prev) => ({ ...prev, customerName: val }));
 
   const filteredMenu = useMemo(() => {
     return menuItems.filter((item) => {
@@ -81,9 +101,7 @@ export default function PosBilling() {
   };
 
   const clearCart = () => {
-    setCart([]);
-    setDiscountValue("");
-    setCustomerName("");
+    clearActiveCart();
   };
 
   // Financial Calculations
@@ -96,7 +114,8 @@ export default function PosBilling() {
         ? Math.min(subTotal, (subTotal * rawDiscount) / 100)
         : Math.min(subTotal, rawDiscount);
 
-    const taxableRatio = subTotal > 0 ? (subTotal - discountAmount) / subTotal : 0;
+    const taxableRatio =
+      subTotal > 0 ? (subTotal - discountAmount) / subTotal : 0;
 
     // Calculate GST per item according to each item's configured taxRate
     const taxTotal = cart.reduce((sum, item) => {
@@ -114,25 +133,25 @@ export default function PosBilling() {
     };
   }, [cart, discountType, discountValue]);
 
-
-
   const handleProceedToPayment = () => {
-  if (cart.length === 0) return;
+    if (cart.length === 0) return;
 
-  navigate("/checkout", {
-    state: {
-      draftOrder: {
-        orderNo: `#RP-${Math.floor(1050 + Math.random() * 900)}`,
-        orderType,
-        table: orderType === "Dine-in" ? selectedTable : "Takeaway",
-        customer: customerName.trim() || "Walk-in customer",
-        items: cart,
-        subTotal: billingSummary.subTotal,
-        discountAmount: billingSummary.discountAmount,
+    navigate("/checkout", {
+      state: {
+        draftOrder: {
+          orderNo: activeCart.existingOrderId || `#RP-${Math.floor(1050 + Math.random() * 900)}`,
+          existingOrderId: activeCart?.existingOrderId || null,
+          orderType,
+          table: orderType === "Dine-in" ? selectedTable : "Takeaway",
+          customer: customerName.trim() || "Walk-in customer",
+          items: cart,
+          subTotal: billingSummary.subTotal,
+          discountAmount: billingSummary.discountAmount,
+        },
       },
-    },
-  });
-};
+    });
+  };
+
   return (
     <>
       <div className="flex flex-col gap-6 lg:h-[calc(100vh-7rem)] lg:flex-row">
@@ -311,6 +330,7 @@ export default function PosBilling() {
               />
             </div>
           </div>
+
           {/* Cart Items List */}
           <div className="my-4 flex-1 space-y-2.5 overflow-y-auto border-y border-white/10 py-3 pr-1">
             {cart.length === 0 ? (
@@ -393,32 +413,31 @@ export default function PosBilling() {
               )}
             </div>
 
-           <div className="space-y-2.5 text-sm">
+            <div className="space-y-2.5 text-sm">
+              <div className="flex justify-between text-stone-400">
+                <span>GST (5%)</span>
+                <span className="font-semibold tabular-nums text-stone-100">
+                  ₹{Math.round(billingSummary.taxTotal).toLocaleString("en-IN")}
+                </span>
+              </div>
 
-  <div className="flex justify-between text-stone-400">
-    <span>GST (5%)</span>
-    <span className="font-semibold tabular-nums text-stone-100">
-      ₹{Math.round(billingSummary.taxTotal).toLocaleString("en-IN")}
-    </span>
-  </div>
+              <div className="flex items-center justify-between border-t border-dashed border-white/10 pt-3 text-lg font-bold text-stone-100">
+                <span>Total</span>
+                <span className="tabular-nums text-[#f0643b]">
+                  ₹{billingSummary.grandTotal.toLocaleString("en-IN")}
+                </span>
+              </div>
 
-  <div className="flex items-center justify-between border-t border-dashed border-white/10 pt-3 text-lg font-bold text-stone-100">
-    <span>Total</span>
-    <span className="tabular-nums text-[#f0643b]">
-      ₹{billingSummary.grandTotal.toLocaleString("en-IN")}
-    </span>
-  </div>
-
-  <button
-    type="button"
-    disabled={cart.length === 0}
-    onClick={handleProceedToPayment}
-    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#f0643b] py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#d9532c] disabled:cursor-not-allowed disabled:opacity-40"
-  >
-    <span>Proceed to payment</span>
-    <span>›</span>
-  </button>
-</div>
+              <button
+                type="button"
+                disabled={cart.length === 0}
+                onClick={handleProceedToPayment}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#f0643b] py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#d9532c] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span>Proceed to payment</span>
+                <span>›</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
