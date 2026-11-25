@@ -2,6 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Dashboard from "../pages/Dashboard";
 import Orders from "@/pages/Orders";
+import MenuManagement from "@/pages/MenuManagement";
+import { MenuProvider } from "@/context/MenuProvider";
+import { OrderProvider } from "@/context/OrderProvider";
+import PosBilling from "@/pages/PosBilling";
+import Checkout from "@/pages/Checkout";
 
 function ComingSoon({ title }) {
   return (
@@ -13,14 +18,17 @@ function ComingSoon({ title }) {
 
 export default function AppRoutes() {
   return (
+    <MenuProvider>
+      <OrderProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="pos" element={<ComingSoon title="POS Billing" />} />
+          <Route path="pos" element={<PosBilling/>} />
+          <Route path="checkout" element={<Checkout/>}/>
           <Route path="orders" element={<Orders/>} />
-          <Route path="menu" element={<ComingSoon title="Menu Management" />} />
+          <Route path="menu" element={<MenuManagement/>} />
           <Route path="inventory" element={<ComingSoon title="Inventory" />} />
           <Route path="expenses" element={<ComingSoon title="Expenses" />} />
           <Route path="reports" element={<ComingSoon title="Reports" />} />
@@ -30,5 +38,7 @@ export default function AppRoutes() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </OrderProvider>
+    </MenuProvider>
   );
 }

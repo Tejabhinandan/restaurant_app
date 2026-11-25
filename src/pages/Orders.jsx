@@ -1,12 +1,13 @@
 import DataTable from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { ordersData } from "@/data/mockOrders";
+import useOrders from "@/hooks/useOrders";
 import { ArrowUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const statusTabs = ["All", "Pending", "Preparing", "Completed", "Cancelled"]
 
 export default function Orders() {
+const { orders } = useOrders();
 const [selectedStatus, setSelectedStatus] = useState("All");
 const [searchQuery, setSearchQuery] = useState("");
 const [sortConfig, setSortConfig] = useState({key:"id", direction:"desc"});
@@ -19,7 +20,7 @@ const handleSort=(key)=>{
 };
 
 const filteredAndSortedOrders= useMemo(()=>{
-    return ordersData.filter((order)=>{
+    return orders?.filter((order)=>{
         const matchesStatus = selectedStatus === "All" || order?.status === selectedStatus;
         const matchesQuery = order?.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order?.customer.toLowerCase().includes(searchQuery?.toLowerCase()) ||
@@ -32,7 +33,7 @@ const filteredAndSortedOrders= useMemo(()=>{
         }
         return a[sortConfig.key].localeCompare(b[sortConfig.key]) * dir
     })
-},[selectedStatus,searchQuery,sortConfig])
+},[ orders,selectedStatus,searchQuery,sortConfig ])
 
 const columns = [
     {
@@ -108,8 +109,8 @@ const columns = [
           {statusTabs.map((tab) => {
             const count =
               tab === "All"
-                ? ordersData.length
-                : ordersData.filter((o) => o.status === tab).length;
+                ? orders.length
+                : orders.filter((o) => o.status === tab).length;
 
             return (
               <button
