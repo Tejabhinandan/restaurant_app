@@ -1,13 +1,16 @@
 import DataTable from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
 import useOrders from "@/hooks/useOrders";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, PlayCircle, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const statusTabs = ["All", "Pending", "Preparing", "Completed", "Cancelled"]
 
 export default function Orders() {
-const { orders } = useOrders();
+const { orders, loadOrderIntoCart, updateOrderStatus } = useOrders();
+const navigate = useNavigate()
+
 const [selectedStatus, setSelectedStatus] = useState("All");
 const [searchQuery, setSearchQuery] = useState("");
 const [sortConfig, setSortConfig] = useState({key:"id", direction:"desc"});
@@ -17,6 +20,11 @@ const handleSort=(key)=>{
         key,
         direction: prev.key === key && prev.direction === "asc" ?"desc":"asc",
     }));
+};
+
+const handleResumeOrder =(order)=>{
+  loadOrderIntoCart(order);
+  navigate("/pos")
 };
 
 const filteredAndSortedOrders= useMemo(()=>{
@@ -91,7 +99,44 @@ const columns = [
     {
       key: "status",
       header: "STATUS",
-      render: (row) => <StatusBadge status={row.status} />,
+      render: (row) => (
+      <div className="flex flex-wrap items-center gap-2">
+      <StatusBadge status={row.status} />
+
+      {/* Kitchen progression buttons */}
+      {row.status === "Pending" && (
+        <button
+          type="button"
+          onClick={() => updateOrderStatus(row.id, "Preparing")}
+          className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-300 transition hover:bg-amber-500/20"
+        >
+          Start Prep
+        </button>
+      )}
+
+      {row.status === "Preparing" && row.payment !== "Pending" && (
+        <button
+          type="button"
+          onClick={() => updateOrderStatus(row.id, "Completed")}
+          className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+        >
+          Mark Completed
+        </button>
+      )}
+
+      {/* Resume / Collect Payment whenever payment is still Pending */}
+      {row.payment === "Pending" && row.status !== "Cancelled" && (
+        <button
+          type="button"
+          onClick={() => handleResumeOrder(row)}
+          className="inline-flex items-center gap-1 rounded-lg border border-[#f0643b]/40 bg-[#f0643b]/10 px-2.5 py-1 text-[11px] font-semibold text-[#f0643b] transition hover:bg-[#f0643b] hover:text-white"
+        >
+          <PlayCircle className="h-3 w-3" />
+          <span>Resume / Pay</span>
+        </button>
+      )}
+    </div>
+        ),
     },
   ];
   return (

@@ -139,7 +139,8 @@ export default function PosBilling() {
     navigate("/checkout", {
       state: {
         draftOrder: {
-          orderNo: `#RP-${Math.floor(1050 + Math.random() * 900)}`,
+          orderNo: activeCart.existingOrderId || `#RP-${Math.floor(1050 + Math.random() * 900)}`,
+          existingOrderId: activeCart?.existingOrderId || null,
           orderType,
           table: orderType === "Dine-in" ? selectedTable : "Takeaway",
           customer: customerName.trim() || "Walk-in customer",

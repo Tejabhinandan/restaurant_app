@@ -1,3 +1,4 @@
+import useOrders from "@/hooks/useOrders";
 import { Bell, Calendar, ChevronRight, Menu, Plus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -15,6 +16,7 @@ import { Link, useLocation } from "react-router-dom";
   }
   function Header({onMenuClick}) {
  const {pathname} = useLocation()
+ const { clearActiveCart } = useOrders();
  const currentPage = routeTitles[pathname] || "Dashboard"
 
  const businessDate = new Date().toLocaleDateString("en-GB",{
@@ -47,6 +49,7 @@ import { Link, useLocation } from "react-router-dom";
         {/* Quick POS Billing Button */}
         <Link
           to="/pos"
+          onClick={clearActiveCart}
           className="flex items-center gap-1.5 rounded-xl bg-[#f0643b] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#d9532c] sm:text-sm"
         >
           <Plus className="h-4 w-4" />
