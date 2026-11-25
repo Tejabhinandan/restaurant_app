@@ -14,7 +14,7 @@ import CashPaymentModal from "@/components/CashPaymentModal";
 export default function Checkout() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { addOrder } = useOrders();
+  const { addOrder, clearActiveCart } = useOrders();
 
   const draftOrder = state?.draftOrder;
 
@@ -107,6 +107,7 @@ export default function Checkout() {
     };
 
     addOrder(finalOrder);
+    clearActiveCart();
     setCompletedReceipt(finalOrder);
 
     if (shouldPrint) {

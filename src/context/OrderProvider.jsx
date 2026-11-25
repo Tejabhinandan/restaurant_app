@@ -2,23 +2,44 @@ import { useState } from "react";
 import { OrderContext } from "./OrderContext";
 import { ordersData } from "@/data/mockOrders";
 
+const emptyCart = {
+  items: [],
+  orderType: "Dine-in",
+  selectedTable: "Table 01",
+  customerName: "",
+  discountType: "FLAT",
+  discountValue: "",
+};
+
 export function OrderProvider({ children }) {
   const [orders, setOrders] = useState(ordersData);
+  const [activeCart, setActiveCart] = useState(emptyCart);
 
-  // Add completed POS order (Phase 4: POST /api/orders)
   const addOrder = (newOrder) => {
     setOrders((prev) => [newOrder, ...prev]);
   };
 
-  // Update status on Orders page (Phase 4: PATCH /api/orders/:id/status)
   const updateOrderStatus = (id, status) => {
     setOrders((prev) =>
       prev.map((order) => (order.id === id ? { ...order, status } : order))
     );
   };
 
+  const clearActiveCart = () => {
+    setActiveCart(emptyCart);
+  };
+
   return (
-    <OrderContext.Provider value={{ orders, addOrder, updateOrderStatus }}>
+    <OrderContext.Provider
+      value={{
+        orders,
+        addOrder,
+        updateOrderStatus,
+        activeCart,
+        setActiveCart,
+        clearActiveCart,
+      }}
+    >
       {children}
     </OrderContext.Provider>
   );
