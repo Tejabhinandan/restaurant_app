@@ -31,6 +31,7 @@ export default function Checkout() {
   const [cashReceived, setCashReceived] = useState(0);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [completedReceipt, setCompletedReceipt] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Recalculate totals dynamically for both ₹ (FLAT) and % (PERCENT)
   const totals = useMemo(() => {
@@ -85,7 +86,10 @@ export default function Checkout() {
     });
   };
 
-  const finalizeOrder = (status, shouldPrint) => {
+  const finalizeOrder = async (status, shouldPrint) => {
+    if(isSubmitting){
+      return setIsSubmitting(true)
+    }
     const now = new Date().toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -106,11 +110,13 @@ export default function Checkout() {
       time: now,
     };
 
-    if(draftOrder?.existingOrderId){
-      updateOrder(draftOrder.existingOrderId, finalOrder)
+    try{
+  if(draftOrder?.existingOrderId){
+      await updateOrder(draftOrder.existingOrderId, finalOrder)
     }else{
-      addOrder(finalOrder);
+      await addOrder(finalOrder);
     }
+
     clearActiveCart();
     setCompletedReceipt(finalOrder);
 
@@ -121,6 +127,12 @@ export default function Checkout() {
       }, 150);
     } else {
       navigate("/orders");
+    }
+    
+    }catch(err){
+      console.error("Failed to save Order: ", err?.response?.data || err.message)
+    }finally {
+      setIsSubmitting(false)
     }
   };
 

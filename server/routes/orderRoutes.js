@@ -2,6 +2,14 @@ import express from "express";
 import Order from "../models/Order.js";
 
 const router = express.Router();
+const formatLineItems = (items = []) =>
+  items.map((item) => ({
+    menuItemId: item._id?.length === 24 ? item._id : item.menuItemId || undefined,
+    name: item.name,
+    price: item.price,
+    qty: item.qty,
+    taxRate: item.taxRate || 5,
+  }));
 
 router.get("/",async (req,res) => {
     try{
@@ -14,15 +22,10 @@ router.get("/",async (req,res) => {
 
 router.post("/", async (req, res) => {
     try{
-        const orderPayload = {
-            lineItems: (req.body.lineItems || []).map((item)=>({
-                menuItemId: item._id?.length === 24 ? item._id: undefined,
-                name: item.name,
-                price: item.price,
-                qty: item.qty,
-                taxRate: item.taxRate || 5
-            }))
-        }
+       const orderPayload = {
+      ...req.body,
+      lineItems: formatLineItems(req.body.lineItems),
+    };
 
         const created = await Order.create(orderPayload)
         res.status(201).json(created)

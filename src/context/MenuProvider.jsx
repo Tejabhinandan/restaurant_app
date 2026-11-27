@@ -11,7 +11,7 @@ export function MenuProvider({ children }) {
       const loadMenu = async ()=>{
 
     try {
-      let data = await api.get("/menu")
+      let { data } = await api.get("/menu")
       if(Array.isArray(data) && data?.length === 0){
         const sedData = await api.post("/menu/seed");
         data = sedData
