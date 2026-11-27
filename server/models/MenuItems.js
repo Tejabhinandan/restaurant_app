@@ -24,7 +24,11 @@ const menuItemSchema =new mongoose.Schema(
         isVeg:{
             type:Boolean,
             default:true
-        }
+        },
+        isAvailable :{
+            type: Boolean,
+            default:true,
+        },
     },
     {timestamps:true}
 )

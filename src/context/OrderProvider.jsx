@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { OrderContext } from "./OrderContext";
 import { ordersData } from "@/data/mockOrders";
+import api from "@/api/axiosClient";
 
 const PENDING_STORAGE_KEY = "restaurant_pro_pending_orders";
 
@@ -25,6 +26,23 @@ export function OrderProvider({ children }) {
     }
   });
   const [activeCart, setActiveCart] = useState(emptyCart);
+  const [loading, setLoading] = useState(true)
+
+  // Fetch completed orders from DB
+
+  useEffect(()=>{
+    const loadOrders= async ()=>{
+      try {
+        const data = await api.get("/orders");
+        setCompletedOrders(Array.isArray(data)? data: [])
+      }catch(err){
+        console.error("Failed to fetch orders", err);
+      }finally {
+        setLoading(false)
+      }
+    }
+    loadOrders()
+  },[])
 
   // Sync pending orders to localStorage so open table tabs survive page refreshes
   useEffect(() => {
@@ -41,7 +59,7 @@ export function OrderProvider({ children }) {
     [pendingOrders, completedOrders]
   );
 
-  const addOrder = (newOrder) => {
+  const addOrder = async (newOrder) => {
     if (newOrder.status === "Pending") {
       setPendingOrders((prev) => [
         newOrder,
@@ -50,10 +68,11 @@ export function OrderProvider({ children }) {
       return;
     }
 
-    setCompletedOrders((prev) => [newOrder, ...prev]);
+    const { data: created } = await api.post("/orders", newOrder);
+    setCompletedOrders((prev) => [created, ...prev]);
   };
 
-  const updateOrder = (id, updateFields) => {
+  const updateOrder = async (id, updateFields) => {
     if (updateFields.status === "Pending") {
       setPendingOrders((prev) =>
         prev.map((order) =>
@@ -63,25 +82,17 @@ export function OrderProvider({ children }) {
       return;
     }
 
-    // Move from pendingOrders to completedOrders once paid
     const existingPending = pendingOrders.find((o) => o.id === id);
-    if (existingPending) {
-      setPendingOrders((prev) => prev.filter((o) => o.id !== id));
-      setCompletedOrders((prev) => [
-        { ...existingPending, ...updateFields },
-        ...prev,
-      ]);
-      return;
-    }
+    const finalPayload = existingPending
+      ? { ...existingPending, ...updateFields }
+      : updateFields;
 
-    setCompletedOrders((prev) =>
-      prev.map((order) =>
-        order.id === id ? { ...order, ...updateFields } : order
-      )
-    );
+    const { data: created } = await api.post("/orders", finalPayload);
+    setPendingOrders((prev) => prev.filter((o) => o.id !== id));
+    setCompletedOrders((prev) => [created, ...prev]);
   };
 
-  const updateOrderStatus = (id, status) => {
+  const updateOrderStatus = async (id, status) => {
     const isPendingTab = pendingOrders.some((o) => o.id === id);
 
     if (isPendingTab) {
@@ -97,8 +108,12 @@ export function OrderProvider({ children }) {
       return;
     }
 
+    const { data: updated } = await api.patch(
+      `/orders/${encodeURIComponent(id)}/status`,
+      { status }
+    );
     setCompletedOrders((prev) =>
-      prev.map((order) => (order.id === id ? { ...order, status } : order))
+      prev.map((order) => (order.id === id ? updated : order))
     );
   };
 
@@ -130,6 +145,7 @@ export function OrderProvider({ children }) {
         addOrder,
         updateOrderStatus,
         activeCart,
+        loading,
         updateOrder,
         loadOrderIntoCart,
         setActiveCart,
