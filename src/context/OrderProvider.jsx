@@ -33,7 +33,7 @@ export function OrderProvider({ children }) {
   useEffect(()=>{
     const loadOrders= async ()=>{
       try {
-        const data = await api.get("/orders");
+        const {data} = await api.get("/orders");
         setCompletedOrders(Array.isArray(data)? data: [])
       }catch(err){
         console.error("Failed to fetch orders", err);
